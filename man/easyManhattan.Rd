@@ -10,6 +10,7 @@ easyManhattan(
   pos = "pos",
   p = "p",
   labs = "rsid",
+  startLabels = NULL,
   pcutoff = 5e-08,
   chromGap = NULL,
   chromCols = c("royalblue", "skyblue"),
@@ -42,6 +43,10 @@ easyManhattan(
 \item{p}{The column of p values in \code{data}.}
 
 \item{labs}{The column of labels in \code{data}.}
+
+\item{startLabels}{Vector of initial labels. With a character vector, labels
+are identified in the column specified by \code{labs}. With a numeric vector,
+points to be labelled are referred to by row number.}
 
 \item{pcutoff}{Cut-off for p value significance. Defaults to 5E-08.}
 
@@ -95,7 +100,9 @@ width span SNPs centred at that SNP. Large numbers take significantly longer.}
 \item{...}{Other arguments passed to \code{\link[=easylabel]{easylabel()}}.}
 }
 \value{
-No return value
+By default no return value. If \code{output_shiny = FALSE} or the shiny
+button 'Export plotly & exit' is pressed, a plotly figure is returned.
+See \code{\link[=easylabel]{easylabel()}}.
 }
 \description{
 Interactive labelling of Manhattan plots using 'shiny' and 'plotly'

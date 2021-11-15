@@ -56,6 +56,7 @@ easylabel(
   fullGeneNames = FALSE,
   AnnotationDb = NULL,
   custom_annotation = NULL,
+  output_shiny = TRUE,
   ...
 )
 }
@@ -172,22 +173,26 @@ radial labels converge. Defaults to the centre of the plot.}
 
 \item{lineLength}{Initial length of label lines in pixels.}
 
-\item{text_col}{Colour of label text. (Not supported by plotly.)}
+\item{text_col}{Colour of label text. If set to
+\code{"match"} label text will match the colour of each point.}
 
-\item{line_col}{Colour of label lines. (Not supported by plotly.)}
+\item{line_col}{Colour of label lines. If set to
+\code{"match"} label line will match the colour of each point.}
 
-\item{rectangles}{Logical whether to show rectangles around labels.
-(Not supported by plotly.)}
+\item{rectangles}{Logical whether to show rectangles around labels
+(not supported by plotly).}
 
-\item{rect_col}{Colour for filling rectangles. (Not supported by plotly.)}
+\item{rect_col}{Colour for filling rectangles (not supported by plotly). If
+set to \code{"match"} rectangle fill colour will match the colour of each point.}
 
-\item{border_col}{Colour of rectangle borders. Use \code{border_col = NA} to omit
-borders. (Not supported by plotly.)}
+\item{border_col}{Colour of rectangle borders (not supported by plotly).
+Use \code{border_col = NA} to omit borders. If set to \code{"match"} rectangle border
+colour will match the colour of each point.}
 
 \item{padding}{Amount of padding in pixels around label text.}
 
 \item{border_radius}{Amount of roundedness in pixels to apply to label
-rectangles. (Not supported by plotly.)}
+rectangles (not supported by plotly).}
 
 \item{showLegend}{Logical whether to show or hide the legend.}
 
@@ -220,6 +225,9 @@ Defaults to human gene database \code{AnnotationDb = org.Hs.eg.db}.}
 \item{custom_annotation}{List of annotations to be added via
 \code{\link[plotly:layout]{plotly::layout()}}.}
 
+\item{output_shiny}{Logical whether to output a shiny app. If \code{FALSE} a
+plotly figure will be returned.}
+
 \item{...}{Further graphical parameters passed to \code{plot()} when saving via
 base graphics. The most useful for most users are likely to be \code{cex.lab}
 which alters axis title font size (default 1, see \code{\link[=par]{par()}}), \code{cex.axis} which
@@ -230,7 +238,8 @@ addition of trend lines, extra titles or legends for example (see
 \code{\link[=plot.default]{plot.default()}}).}
 }
 \value{
-No return value
+By default no return value. If \code{output_shiny = FALSE} or the shiny
+button 'Export plotly & exit' is pressed, a plotly figure is returned.
 }
 \description{
 Interactive labelling of scatter plots using shiny/plotly interface.

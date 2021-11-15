@@ -1,6 +1,14 @@
 News
 =====
 
+# easylabel 0.2.4
+###### 13/11/2021
+
+* Add option for label text, line and box colours to match colour of each point
+* Label text & line colours now also work in plotly
+* Enable export of plotly objects
+* Fix bugs in MA plot
+
 # easylabel 0.2.2
 ###### 22/10/2021
 

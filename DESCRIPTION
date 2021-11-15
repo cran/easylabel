@@ -1,7 +1,7 @@
 Package: easylabel
 Type: Package
 Title: Interactive Scatter Plot and Volcano Plot Labels
-Version: 0.2.2
+Version: 0.2.4
 Authors@R: 
     c(person(given = "Myles",family = "Lewis",
     role = c("aut", "cre"),
@@ -33,9 +33,9 @@ RoxygenNote: 7.1.2
 VignetteBuilder: knitr
 Depends: R (>= 2.10)
 NeedsCompilation: no
-Packaged: 2021-10-23 09:35:39 UTC; myles
+Packaged: 2021-11-15 17:11:25 UTC; myles
 Author: Myles Lewis [aut, cre] (<https://orcid.org/0000-0001-9365-5345>),
   Katriona Goldmann [aut] (<https://orcid.org/0000-0002-9073-6323>),
   Cankut Cubuk [ctb] (<https://orcid.org/0000-0003-4646-0849>)
 Repository: CRAN
-Date/Publication: 2021-10-23 09:50:03 UTC
+Date/Publication: 2021-11-15 17:30:02 UTC

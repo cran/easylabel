@@ -92,16 +92,20 @@
 #' @param labCentre Coordinates in x/y units of the central point towards which
 #' radial labels converge. Defaults to the centre of the plot.
 #' @param lineLength Initial length of label lines in pixels.
-#' @param text_col Colour of label text. (Not supported by plotly.)
-#' @param line_col Colour of label lines. (Not supported by plotly.)
-#' @param rectangles Logical whether to show rectangles around labels.
-#' (Not supported by plotly.)
-#' @param rect_col Colour for filling rectangles. (Not supported by plotly.)
-#' @param border_col Colour of rectangle borders. Use `border_col = NA` to omit
-#' borders. (Not supported by plotly.)
+#' @param text_col Colour of label text. If set to 
+#' `"match"` label text will match the colour of each point.
+#' @param line_col Colour of label lines. If set to 
+#' `"match"` label line will match the colour of each point.
+#' @param rectangles Logical whether to show rectangles around labels
+#' (not supported by plotly).
+#' @param rect_col Colour for filling rectangles (not supported by plotly). If 
+#' set to `"match"` rectangle fill colour will match the colour of each point.
+#' @param border_col Colour of rectangle borders (not supported by plotly). 
+#' Use `border_col = NA` to omit borders. If set to `"match"` rectangle border 
+#' colour will match the colour of each point.
 #' @param padding Amount of padding in pixels around label text.
 #' @param border_radius Amount of roundedness in pixels to apply to label
-#' rectangles. (Not supported by plotly.)
+#' rectangles (not supported by plotly).
 #' @param showLegend Logical whether to show or hide the legend.
 #' @param legendxy Vector of coordinates for the position of the legend. 
 #' Coordinates are in plotly paper reference with `c(0, 0)` being the bottom 
@@ -126,6 +130,8 @@
 #' Defaults to human gene database `AnnotationDb = org.Hs.eg.db`.
 #' @param custom_annotation List of annotations to be added via
 #' [plotly::layout()].
+#' @param output_shiny Logical whether to output a shiny app. If `FALSE` a 
+#' plotly figure will be returned.
 #' @param ... Further graphical parameters passed to `plot()` when saving via
 #' base graphics. The most useful for most users are likely to be `cex.lab`
 #' which alters axis title font size (default 1, see [par()]), `cex.axis` which
@@ -135,18 +141,19 @@
 #' addition of trend lines, extra titles or legends for example (see
 #' [plot.default()]).
 #' @seealso [easyVolcano()], [easyMAplot()]
-#' @return No return value
+#' @return  By default no return value. If `output_shiny = FALSE` or the shiny 
+#' button 'Export plotly & exit' is pressed, a plotly figure is returned.
 #' @importFrom shiny fluidPage tabsetPanel tabPanel fluidRow column
 #' radioButtons selectizeInput actionButton checkboxGroupInput observe
 #' updateSelectizeInput reactiveValues isolate reactive debounce
 #' observeEvent modalDialog textAreaInput tagList modalButton showModal
-#' removeModal h4 h5 shinyApp downloadButton selectInput br textInput req
-#' downloadHandler
+#' removeModal h4 h5 runApp downloadButton selectInput br textInput req
+#' downloadHandler stopApp
 #' @importFrom plotly plot_ly layout plotlyOutput renderPlotly event_data
 #' event_register config plotlyProxy plotlyProxyInvoke add_markers %>%
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom DT dataTableOutput datatable formatSignif
-#' @importFrom grDevices adjustcolor pdf dev.off
+#' @importFrom grDevices adjustcolor pdf dev.off col2rgb rgb
 #' @importFrom graphics abline legend lines mtext par points polygon rect
 #' strheight strwidth text axis
 #' @importFrom stats as.formula
@@ -199,7 +206,9 @@ easylabel <- function(data, x, y,
                       panel.last = NULL,
                       fullGeneNames = FALSE,
                       AnnotationDb = NULL,
-                      custom_annotation = NULL, ...) {
+                      custom_annotation = NULL, 
+                      output_shiny = TRUE, 
+                      ...) {
   name_data <- deparse(substitute(data))
   if (is.null(filename)) filename <- paste0("label_", name_data)
   args <- list(...)
@@ -211,10 +220,12 @@ easylabel <- function(data, x, y,
   pxaxis <- list(title = exprToHtml(xlab),
                  showgrid = grepl("x", showgrid, ignore.case = TRUE),
                  color = 'black', ticklen = 5,
+                 mirror = args$bty %in% c('o', ']', '7', 'c'),
                  showline = TRUE, zeroline = zeroline)
   pyaxis <- list(title = exprToHtml(ylab),
                  showgrid = grepl("y", showgrid, ignore.case = TRUE),
-                 color = 'black', ticklen = 5, 
+                 color = 'black', ticklen = 5,
+                 mirror = args$bty %in% c('o', ']', '7', 'u'),
                  showline = TRUE, zeroline = zeroline)
   if (!is.null(xticks)) {
     pxaxis <- c(pxaxis, tickmode = list('array'),
@@ -312,6 +323,16 @@ easylabel <- function(data, x, y,
       }
     }
   }
+  colScheme <- col2hex(colScheme)
+  
+  # deal with case that col is NULL but label colours are set to "match"
+  if (is.null(col)) {
+    if (line_col == "match") line_col <- colScheme[1]
+    if (text_col == "match") text_col <- colScheme[1]
+    if (rect_col == "match") rect_col <- colScheme[1]
+    if (border_col == "match") border_col <- colScheme[1]
+  }
+  ptext_col <- if (rectangles & text_col == "white") rect_col else text_col
 
   # plotly arguments
   psymbols <- pch2symbol[shapeScheme + 1]
@@ -370,7 +391,9 @@ easylabel <- function(data, x, y,
                             labSize = labSize,
                             labelDir = labelDir, labCentre = labCentre,
                             xyspan = xyspan,
-                            lineLength = lineLength)
+                            lineLength = lineLength,
+                            col = col, colScheme = colScheme, 
+                            text_col = ptext_col, line_col = line_col)
   start_xy <- lapply(start_annot, function(i) list(ax = i$ax, ay = i$ay))
   names(start_xy) <- startLabels
   hovertext <- labelchoices
@@ -394,6 +417,49 @@ easylabel <- function(data, x, y,
     notNA <- !is.na(plotly_data$gene_fullname)
     hovertext[notNA] <- paste0(labelchoices[notNA], "\n",
                                plotly_data$gene_fullname[notNA])
+  }
+  
+  if (!is.null(hline)) {
+    pshapes = lapply(hline, function(i) {
+      list(type = "line",
+           line = list(width = 1, color = '#AAAAAA', dash = 'dash'),
+           x0 = 0, x1 = 1, y0 = i, y1 = i, xref = "paper")
+    })
+  } else {
+    pshapes = list()
+  }
+  if (!is.null(vline)) {
+    pshapes = c(pshapes, lapply(vline, function(i) {
+      list(type = "line",
+           line = list(width = 1, color = '#AAAAAA', dash = 'dash'),
+           y0 = 0, y1 = 1, x0 = i, x1 = i, yref = "paper")
+    }))
+  }
+  
+  if (!output_shiny) {
+    labs <- startLabels
+    annot <- annotation(labs, plotly_data, x, y,
+                        labelchoices = labelchoices,
+                        labSize = labSize, labelDir = labelDir,
+                        labCentre = labCentre, xyspan = xyspan,
+                        lineLength = lineLength,
+                        col = col, colScheme = colScheme, 
+                        text_col = ptext_col, line_col = line_col)
+    annot <- c(annot, LRtitles, custom_annotation)
+    return(main_plotly(plotly_data, x, y, 
+                       col, colScheme,
+                       shape, psymbols, outlier_psymbol,
+                       sizeSwitch, size, sizeRange,
+                       showOutliers, pt = 1,
+                       pmarker,
+                       hovertext, pkey,
+                       width, height,
+                       args,
+                       pxaxis, pyaxis,
+                       annot,
+                       legendxy, showLegend,
+                       pshapes)
+    )
   }
   
   ui <- fluidPage(
@@ -428,7 +494,8 @@ easylabel <- function(data, x, y,
                         br(),
                         actionButton("add_batch", "Add batch"),
                         actionButton("clear", "Clear all"),
-                        downloadButton("save_plot", "Save pdf")
+                        downloadButton("save_plot", "Save pdf"),
+                        actionButton("stop", "Export plotly & exit")
                  )
                )
       ),
@@ -459,99 +526,56 @@ easylabel <- function(data, x, y,
                           labelchoices = labelchoices,
                           labSize = labSize, labelDir = ldir,
                           labCentre = labCentre, xyspan = xyspan,
-                          lineLength = lineLength)
-      if (!is.null(hline)) {
-        pshapes = lapply(hline, function(i) {
-          list(type = "line",
-               line = list(width = 1, color = '#AAAAAA', dash = 'dash'),
-               x0 = 0, x1 = 1, y0 = i, y1 = i, xref = "paper")
-        })
-      } else {
-        pshapes = list()
-      }
-      if (!is.null(vline)) {
-        pshapes = c(pshapes, lapply(vline, function(i) {
-          list(type = "line",
-               line = list(width = 1, color = '#AAAAAA', dash = 'dash'),
-               y0 = 0, y1 = 1, x0 = i, x1 = i, yref = "paper")
-        }))
-      }
+                          lineLength = lineLength,
+                          col = col, colScheme = colScheme, 
+                          text_col = ptext_col, line_col = line_col)
+      annot <- c(annot, LRtitles, custom_annotation)
+      
+      main_plotly(plotly_data, x, y, 
+                  col, colScheme,
+                  shape, psymbols, outlier_psymbol,
+                  sizeSwitch, size, sizeRange,
+                  showOutliers, pt,
+                  pmarker,
+                  hovertext, pkey,
+                  width, height,
+                  args,
+                  pxaxis, pyaxis,
+                  annot,
+                  legendxy, showLegend,
+                  pshapes)
 
-      switch(showOutliers,
-             # no outliers
-             plot_ly(data = plotly_data, x = as.formula(paste0('~', x)),
-                     y = as.formula(paste0('~', y)),
-                     type = switch(pt, 'scattergl', 'scatter'),
-                     mode = 'markers',
-                     color = if (!is.null(col)) {
-                       as.formula(paste0('~', col))
-                     } else I(colScheme),
-                     colors = colScheme,
-                     size = switch(sizeSwitch, I(size), ~plotly_size),
-                     marker = pmarker,
-                     sizes = sizeRange,
-                     symbol = if (!is.null(shape)) {
-                       as.formula(paste0('~', shape))
-                     } else I(psymbols),
-                     symbols = psymbols,
-                     text = hovertext, hoverinfo = 'text',
-                     key = pkey, source = 'lab_plotly',
-                     width = width, height = height) %>%
-               layout(
-                 title = args$main,
-                 xaxis = pxaxis,
-                 yaxis = pyaxis),
-             # with outliers
-             plot_ly(data = plotly_data[!plotly_data$outlier,],
-                     x = as.formula(paste0('~', x)),
-                     y = as.formula(paste0('~', y)),
-                     type = switch(pt, 'scattergl', 'scatter'),
-                     mode = 'markers',
-                     color = if (!is.null(col)) {
-                       as.formula(paste0('~', col))
-                     } else I(colScheme),
-                     colors = colScheme,
-                     size = switch(sizeSwitch, I(size), ~plotly_size),
-                     marker = pmarker,
-                     symbol = if (!is.null(shape)) {
-                       ~comb_symbol
-                     } else I(psymbols),
-                     symbols = psymbols,
-                     text = hovertext[!plotly_data$outlier], hoverinfo = 'text',
-                     key = pkey[!plotly_data$outlier], source = 'lab_plotly',
-                     legendgroup = 'Main',
-                     width = width, height = height) %>%
-               add_markers(data = plotly_data[plotly_data$outlier, ],
-                           x = as.formula(paste0('~', x)),
-                           y = as.formula(paste0('~', y)),
-                           type = switch(pt, 'scattergl', 'scatter'),
-                           color = as.formula(paste0('~', col)),
-                           colors = colScheme,
-                           marker = pmarker,
-                           symbol = if (!is.null(shape)) {
-                             ~comb_symbol
-                           } else I(outlier_psymbol),
-                           symbols = psymbols,
-                           inherit = F,
-                           text = hovertext[plotly_data$outlier],
-                           hoverinfo = 'text',
-                           key = pkey[plotly_data$outlier],
-                           legendgroup = 'outlier', name = 'outlier') %>%
-               layout(
-                 title = args$main,
-                 xaxis = pxaxis,
-                 yaxis = pyaxis)
-      ) %>%
-        layout(annotations = c(annot, LRtitles, custom_annotation),
-               hovermode = 'closest',
-               legend = list(font = list(color = 'black'),
-                             x = legendxy[1], y = legendxy[2]),
-               showlegend = showLegend,
-               shapes = pshapes) %>%
-        config(edits = list(annotationTail = TRUE),
-               toImageButtonOptions = list(format = "svg")) %>%
-        event_register(event = 'plotly_click')
-
+    })
+    
+    # Exit and export plotly object
+    observeEvent(input$stop, {
+      labs <- labels$list
+      current_xy <- labelsxy$list
+      pt <- as.numeric(input$ptype)
+      ldir <- input$labDir
+      annot <- annotation(labs, plotly_data, x, y, current_xy,
+                          labelchoices = labelchoices,
+                          labSize = labSize, labelDir = ldir,
+                          labCentre = labCentre, xyspan = xyspan,
+                          lineLength = lineLength,
+                          col = col, colScheme = colScheme, 
+                          text_col = ptext_col, line_col = line_col)
+      annot <- c(annot, LRtitles, custom_annotation)
+      stopApp(
+        main_plotly(plotly_data, x, y,
+                    col, colScheme,
+                    shape, psymbols, outlier_psymbol,
+                    sizeSwitch, size, sizeRange,
+                    showOutliers, pt,
+                    pmarker,
+                    hovertext, pkey,
+                    width, height,
+                    args,
+                    pxaxis, pyaxis,
+                    annot,
+                    legendxy, showLegend,
+                    pshapes)
+      )
     })
 
     # download plot using base graphics
@@ -573,12 +597,15 @@ easylabel <- function(data, x, y,
         annot <- annotation(labs, plotly_data, x, y, current_xy,
                             labelchoices = labelchoices,
                             labSize = labSize,
-                            lineLength = lineLength)
+                            lineLength = lineLength,
+                            col = col, colScheme = colScheme, 
+                            text_col = ptext_col, line_col = line_col)
         annotdf <- data.frame(x = unlist(lapply(annot, '[', 'x')),
                               y = unlist(lapply(annot, '[', 'y')),
                               ax = unlist(lapply(annot, '[', 'ax')),
                               ay = unlist(lapply(annot, '[', 'ay')),
                               text = unlist(lapply(annot, '[', 'text')))
+        if (!is.null(col)) annotdf$col <- colScheme[plotly_data[as.numeric(labs), col]]
         # convert plotly ax,ay to x,y coords
         annotdf$ax <- annotdf$x +
           annotdf$ax / (width - 150) * xspan * 1.2
@@ -586,16 +613,15 @@ easylabel <- function(data, x, y,
           annotdf$ay / height * yspan * 1.2
         # expand xlim, ylim for labels on the edges
         if (is.null(xlim)) {
-          xlim <- range(c(xrange, annotdf$ax), na.rm = TRUE)
+          xlim <- xrange <- range(c(xrange, annotdf$ax), na.rm = TRUE)
           xspan <- xlim[2] - xlim[1]
-          xlim[1] <- xlim[1] - xspan * 0.025
-          xlim[2] <- xlim[2] + xspan * 0.025
+          xlim[1] <- xrange[1] <- xlim[1] - xspan * 0.01
+          xlim[2] <- xrange[2] <- xlim[2] + xspan * 0.01
+          xspan <- xspan * 1.02
         }
         if (is.null(ylim)) {
-          ylim <- range(c(yrange, annotdf$ay), na.rm = TRUE)
+          ylim <- yrange <- range(c(yrange, annotdf$ay), na.rm = TRUE)
           yspan <- ylim[2] - ylim[1]
-          ylim[1] <- ylim[1] - yspan * 0.025
-          ylim[2] <- ylim[2] + yspan * 0.025
         }
       }
       leg_xy <- c(legendxy[1] * xspan * 1.05 + xrange[1] - xspan * 0.025,
@@ -714,15 +740,20 @@ easylabel <- function(data, x, y,
         annotdf$texth <- strheight(annotdf$text, cex = cex.text) + 2 * pxy[2]
         annotdf$textw <- strwidth(annotdf$text, cex = cex.text) + 2 * pxy[1]
         # plot label line
-        linerect(annotdf, line_col)
+        linerect(annotdf,
+                 line_col = if (line_col == "match") annotdf$col else line_col)
         if (rectangles) {
           roundRect(annotdf$ax - annotdf$textw/2, annotdf$ay - annotdf$texth/2,
                     annotdf$ax + annotdf$textw/2, annotdf$ay + annotdf$texth/2,
-                    col = rect_col, border = border_col,
+                    col = if (rect_col != "match" | is.na(rect_col)) {
+                      rect_col} else annotdf$col,
+                    border = if (border_col != "match" | is.na(border_col)) {
+                      border_col} else annotdf$col,
                     border_radius = border_radius, xpd = NA)
         }
         text(annotdf$ax, annotdf$ay, annotdf$text,
-             col = text_col, xpd = NA, cex = cex.text)
+             xpd = NA, cex = cex.text,
+             col = if (text_col == "match") annotdf$col else text_col)
       }
       if (!is.null(c(col, shape)) & showLegend) {
         legend(x = leg_xy[1], y = leg_xy[2],
@@ -796,7 +827,9 @@ easylabel <- function(data, x, y,
                           labSize = labSize,
                           labelDir = input$labDir, labCentre = labCentre,
                           xyspan = xyspan,
-                          lineLength = lineLength)
+                          lineLength = lineLength,
+                          col = col, colScheme = colScheme, 
+                          text_col = ptext_col, line_col = line_col)
       labelsxy$list <- lapply(annot, function(i) list(ax = i$ax, ay = i$ay))
       names(labelsxy$list) <- labs
       plotlyProxy('plotly', session) %>%
@@ -885,7 +918,9 @@ easylabel <- function(data, x, y,
                           labSize = labSize,
                           labelDir = input$labDir, labCentre = labCentre,
                           xyspan = xyspan,
-                          lineLength = lineLength)
+                          lineLength = lineLength,
+                          col = col, colScheme = colScheme, 
+                          text_col = ptext_col, line_col = line_col)
       labelsxy$list <- lapply(annot, function(i) list(ax = i$ax, ay = i$ay))
       names(labelsxy$list) <- labs
       plotlyProxy('plotly', session) %>%
@@ -896,8 +931,97 @@ easylabel <- function(data, x, y,
 
   }
 
-  shinyApp(ui, server)
+  runApp(list(ui = ui, server = server))
+}
 
+main_plotly <- function(plotly_data, x, y, 
+                        col, colScheme,
+                        shape, psymbols, outlier_psymbol,
+                        sizeSwitch, size, sizeRange,
+                        showOutliers, pt,
+                        pmarker,
+                        hovertext, pkey,
+                        width, height,
+                        args,
+                        pxaxis, pyaxis,
+                        annot,
+                        legendxy, showLegend,
+                        pshapes
+                        ) {
+  switch(showOutliers,
+         # no outliers
+         plot_ly(data = plotly_data, x = as.formula(paste0('~', x)),
+                 y = as.formula(paste0('~', y)),
+                 type = switch(pt, 'scattergl', 'scatter'),
+                 mode = 'markers',
+                 color = if (!is.null(col)) {
+                   as.formula(paste0('~', col))
+                 } else I(colScheme),
+                 colors = colScheme,
+                 size = switch(sizeSwitch, I(size), ~plotly_size),
+                 marker = pmarker,
+                 sizes = sizeRange,
+                 symbol = if (!is.null(shape)) {
+                   as.formula(paste0('~', shape))
+                 } else I(psymbols),
+                 symbols = psymbols,
+                 text = hovertext, hoverinfo = 'text',
+                 key = pkey, source = 'lab_plotly',
+                 width = width, height = height) %>%
+           layout(
+             title = args$main,
+             xaxis = pxaxis,
+             yaxis = pyaxis),
+         # with outliers
+         plot_ly(data = plotly_data[!plotly_data$outlier,],
+                 x = as.formula(paste0('~', x)),
+                 y = as.formula(paste0('~', y)),
+                 type = switch(pt, 'scattergl', 'scatter'),
+                 mode = 'markers',
+                 color = if (!is.null(col)) {
+                   as.formula(paste0('~', col))
+                 } else I(colScheme),
+                 colors = colScheme,
+                 size = switch(sizeSwitch, I(size), ~plotly_size),
+                 marker = pmarker,
+                 symbol = if (!is.null(shape)) {
+                   ~comb_symbol
+                 } else I(psymbols),
+                 symbols = psymbols,
+                 text = hovertext[!plotly_data$outlier], hoverinfo = 'text',
+                 key = pkey[!plotly_data$outlier], source = 'lab_plotly',
+                 legendgroup = 'Main',
+                 width = width, height = height) %>%
+           add_markers(data = plotly_data[plotly_data$outlier, ],
+                       x = as.formula(paste0('~', x)),
+                       y = as.formula(paste0('~', y)),
+                       type = switch(pt, 'scattergl', 'scatter'),
+                       color = as.formula(paste0('~', col)),
+                       colors = colScheme,
+                       marker = pmarker,
+                       symbol = if (!is.null(shape)) {
+                         ~comb_symbol
+                       } else I(outlier_psymbol),
+                       symbols = psymbols,
+                       inherit = F,
+                       text = hovertext[plotly_data$outlier],
+                       hoverinfo = 'text',
+                       key = pkey[plotly_data$outlier],
+                       legendgroup = 'outlier', name = 'outlier') %>%
+           layout(
+             title = args$main,
+             xaxis = pxaxis,
+             yaxis = pyaxis)
+  ) %>%
+    layout(annotations = annot,
+           hovermode = 'closest',
+           legend = list(font = list(color = 'black'),
+                         x = legendxy[1], y = legendxy[2]),
+           showlegend = showLegend,
+           shapes = pshapes) %>%
+    config(edits = list(annotationTail = TRUE),
+           toImageButtonOptions = list(format = "svg")) %>%
+    event_register(event = 'plotly_click')
 }
 
 
@@ -911,11 +1035,13 @@ names(labDir_choices) <- c('Radial centre', 'Radial origin',
 # Annotate gene labels
 annotation <- function(labels, data, x, y, current_xy = NULL,
                        labelchoices,
-                       labSize = 12, labelDir = "radial",
+                       labSize, labelDir = "radial",
                        labCentre = c(0, 0), xyspan = c(1, 1),
-                       lineLength = 75) {
+                       lineLength,
+                       col, colScheme, text_col = 'black', line_col = 'black') {
   if (length(labels) == 0) return(list())
   row <- data[as.numeric(labels), ]
+  if (!is.null(col)) datcol <- colScheme[row[, col]]
   sx <- row[, x]
   sy <- row[, y]
   dx <- (sx - labCentre[1]) / xyspan[1]
@@ -950,13 +1076,8 @@ annotation <- function(labels, data, x, y, current_xy = NULL,
     ax <- sign(dx) * lineLength
     ay <- -sign(dy) * lineLength
   } else if (labelDir == 'rect') {
-    if (abs(dx) > abs(dy)) {
-      ax <- sign(dx) * lineLength
-      ay <- rep.int(0, length(labels))
-    } else {
-      ax <- rep.int(0, length(labels))
-      ay <- -sign(dy) * lineLength
-    }
+    ax <- ifelse(abs(dx) > abs(dy), sign(dx) * lineLength, 0)
+    ay <- ifelse(abs(dx) > abs(dy), 0, -sign(dy) * lineLength)
   } else if (labelDir == 'oct') {
     ang <- atan2(dy, dx)
     ang <- round(ang * 4 / pi)
@@ -973,8 +1094,10 @@ annotation <- function(labels, data, x, y, current_xy = NULL,
     }
     list(x = sx[j], y = sy[j], ax = ax[j], ay = ay[j],
          text = labelchoices[as.numeric(i)], textangle = 0,
-         font = list(color = "black", size = labSize),
-         arrowcolor = "black", arrowwidth = 1, arrowhead = 0, arrowsize = 1.5,
+         font = list(color = if (text_col == "match") datcol[j] else text_col,
+                     size = labSize),
+         arrowcolor = if (line_col == "match") datcol[j] else line_col,
+         arrowwidth = 1, arrowhead = 0, arrowsize = 1.5,
          xanchor = "auto", yanchor = "auto")
   })
 }
@@ -994,9 +1117,10 @@ linerect <- function(df, line_col = 'black') {
   inside <- df$x >= df$ax - df$textw/2 & df$x <= df$ax + df$textw/2 &
     df$y >= df$ay - df$texth/2 & df$y <= df$ay + df$texth/2
   df$ax2[inside] <- NA
+  if (length(line_col) < nrow(df)) line_col <- rep_len(line_col, nrow(df))
   for (i in 1:nrow(df)) {
     lines(c(df$x[i], df$ax2[i]), c(df$y[i], df$ay2[i]),
-          col = line_col, xpd = NA)
+          col = line_col[i], xpd = NA)
   }
 }
 
@@ -1014,9 +1138,10 @@ exprToHtml <- function(x) {
 
 # Plots rounded rectangles for labels
 roundRect <- function(xleft, ybottom, xright, ytop,
+                      col = 'white', border = 'black',
                       border_radius = 8, n = 20, ...) {
   if (border_radius == 0) {
-    return(rect(xleft, ybottom, xright, ytop, ...))
+    return(rect(xleft, ybottom, xright, ytop, col = col, border = border, ...))
   }
   # convert pixels to y axis units
   figheight <- (par("din")[2] - sum(par("mai")[c(1, 3)]))  # inches
@@ -1027,6 +1152,8 @@ roundRect <- function(xleft, ybottom, xright, ytop,
   yi <- border_radius
   xi <- border_radius * diff(par("usr")[1:2]) / diff(par("usr")[3:4])
   xi <- xi * figheight / (par("din")[1] - sum(par("mai")[c(2, 4)]))
+  if (length(col) < length(xleft)) col <- rep_len(col, length(xleft))
+  if (length(border) < length(xleft)) border <- rep_len(border, length(xleft))
   for (i in 1:length(xleft)) {
     x <- c(xright[i] - xi + xi * cx(0, pi/2, n),        # corner TR
            xleft[i] + xi + xi * cx(pi/2, pi, n),        # corner TL
@@ -1036,7 +1163,7 @@ roundRect <- function(xleft, ybottom, xright, ytop,
            ytop[i] - yi + yi * cy(pi/2, pi, n),         # corner TL
            ybottom[i] + yi + yi * cy(pi, 3*pi/2, n),    # corner BL
            ybottom[i] + yi + yi * cy(3*pi/2, 2*pi, n))  # corner BR
-    polygon(x, y, ...)
+    polygon(x, y, col = col[i], border = border[i], ...)
   }
 }
 
@@ -1068,3 +1195,8 @@ pch2symbol <- c('square-open', 'circle-open',
             'circle', 'circle',
             'square', 'diamond',
             'arrow-up', 'arrow-down')
+
+col2hex <- function (cname) {
+  colMat <- col2rgb(cname)
+  rgb(red = colMat[1, ]/255, green = colMat[2, ]/255, blue = colMat[3, ]/255)
+}

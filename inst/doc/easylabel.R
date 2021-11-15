@@ -29,6 +29,25 @@ library(easylabel)
 ## ----scatter1, echo = FALSE, message=FALSE, fig.align='center', out.width='80%', out.extra='style="border: 0;"'----
 knitr::include_graphics("scatter1.png")
 
+## ---- eval=FALSE--------------------------------------------------------------
+#  data(mtcars)
+#  
+#  p1 <- easylabel(mtcars, x = 'mpg', y = 'wt', col = 'cyl',
+#                  startLabels = rownames(mtcars)[mtcars$gear == 5],
+#                  output_shiny = FALSE) %>%
+#    layout(yaxis = list(zeroline = FALSE))
+#  
+#  p2 <- easylabel(mtcars, x = 'mpg', y = 'drat', col = 'vs',
+#                  colScheme = c("dodgerblue", "orange"),
+#                  startLabels = rownames(mtcars)[mtcars$gear == 5],
+#                  output_shiny = FALSE) %>%
+#    layout(xaxis = list(zeroline = FALSE))
+#  
+#  plotly::subplot(p1, p2, nrows = 2, shareY = TRUE, titleX = TRUE, margin = 0.05)
+
+## ----plotlyOutput, echo = FALSE, message=FALSE, fig.align='center', out.width='80%', out.extra='style="border: 0;"'----
+knitr::include_graphics("plotly_output.png")
+
 ## ----eval = FALSE-------------------------------------------------------------
 #  easylabel(mtcars, x = 'mpg', y = 'wt',
 #            col = 'cyl')
@@ -129,8 +148,8 @@ knitr::include_graphics("table1.png")
 #  BiocManager::install("org.Mm.eg.db")
 #  library(org.Mm.eg.db)
 #  easyVolcano(volc1,
-#            fullGeneNames = TRUE,
-#            AnnotationDb = org.Mm.eg.db)
+#              fullGeneNames = TRUE,
+#              AnnotationDb = org.Mm.eg.db)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  easyVolcano(volc2,
@@ -182,8 +201,8 @@ knitr::include_graphics("plot5.png")
 ## ----eval = FALSE-------------------------------------------------------------
 #  colScheme <- c('darkgrey', brewer.pal(9, 'RdYlBu')[c(7:9, 3:1)])
 #  easyMAplot(volc2, fdrcutoff = c(0.05, 0.01, 0.001), size = 6, useQ = TRUE,
-#         alpha = 0.75, outline_col = NA,
-#         colScheme = colScheme)
+#             alpha = 0.75, outline_col = NA,
+#             colScheme = colScheme)
 
 ## ----easyMAplot2, echo = FALSE, message=FALSE, fig.align='center', out.width='80%', out.extra='style="border: 0;"'----
 knitr::include_graphics("MAplot2.png")
@@ -215,14 +234,14 @@ knitr::include_graphics("rect_red_outline.png")
 ## ----eval = FALSE-------------------------------------------------------------
 #  # Transparent grey rectangles, rounded ends
 #  easyMAplot(volc2, fdrcut = c(0.05, 0.01, 0.001), size = 6, useQ = TRUE,
-#         alpha = 0.75, outline_col = NA,
-#         fullGeneNames = TRUE,
-#         colScheme = c('darkgrey', brewer.pal(9, 'RdYlBu')[c(7:9, 3:1)]),
-#         rectangles = TRUE,
-#         border_col = NA,
-#         padding = 5,
-#         rect_col = adjustcolor('grey', alpha.f = 0.6),
-#         border_radius = 20)
+#             alpha = 0.75, outline_col = NA,
+#             fullGeneNames = TRUE,
+#             colScheme = c('darkgrey', brewer.pal(9, 'RdYlBu')[c(7:9, 3:1)]),
+#             rectangles = TRUE,
+#             border_col = NA,
+#             padding = 5,
+#             rect_col = adjustcolor('grey', alpha.f = 0.6),
+#             border_radius = 20)
 #  
 #  # White text on black background, no rounding
 #  easyVolcano(volc2, useQ = TRUE, fullGeneNames = TRUE,
@@ -236,6 +255,32 @@ knitr::include_graphics("rect_red_outline.png")
 
 ## ----labrect4, echo = FALSE, message=FALSE, fig.show='hold', out.width='80%', out.extra='style="border: 0;"'----
 knitr::include_graphics("rect_invert.png")
+
+## ----eval = FALSE-------------------------------------------------------------
+#  # Label text and label lines match point colours
+#  easylabel(gapminder[gapminder$year == 2007, ], x = 'gdpPercap', y = 'lifeExp',
+#            col = 'continent', labs = 'country',
+#            size = 'pop',
+#            alpha = 0.6,
+#            line_col = "match", text_col = "match",
+#            zeroline = FALSE, showgrid = "y")
+
+## ----labmatch1, echo = FALSE, message=FALSE, fig.show='hold', out.width='80%', out.extra='style="border: 0;"'----
+knitr::include_graphics("match1.png")
+
+## ----eval = FALSE-------------------------------------------------------------
+#  # Rectangle fill colour and label line match point colours, rounded rectangles
+#  easylabel(gapminder[gapminder$year == 2007, ], x = 'gdpPercap', y = 'lifeExp',
+#            col = 'continent', labs = 'country',
+#            size = 'pop',
+#            alpha = 0.6,
+#            line_col = "match", text_col = "white",
+#            rectangles = TRUE, border_col = NA,
+#            rect_col = "match", border_radius = 20, padding = 5,
+#            zeroline = FALSE, showgrid = "y")
+
+## ----labmatch2, echo = FALSE, message=FALSE, fig.show='hold', out.width='80%', out.extra='style="border: 0;"'----
+knitr::include_graphics("match2.png")
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  # Manhattan plot using SLE GWAS data from Bentham et al 2015
@@ -272,4 +317,40 @@ knitr::include_graphics("manhattan.png")
 #                size = 8,
 #                shape = 'col',
 #                shapeScheme = c(rep(20, 4), 18))
+
+## ---- eval=FALSE--------------------------------------------------------------
+#  # Create a locus plot over one chromosomal region
+#  library(plotly)
+#  p1 = easyManhattan(SLE_gwas[SLE_gwas$chrom == 6 &
+#                                SLE_gwas$pos >= 28e6 &
+#                                SLE_gwas$pos <= 34e6, ],
+#                     output_shiny = FALSE, labs = "rsid",
+#                     startLabels=c("rs115466242", "rs2853999"),
+#                     npeaks = 3)
+#  
+#  
+#  
+#  # To annotate genes in that region
+#  source("https://raw.githubusercontent.com/KatrionaGoldmann/BioOutputs/master/R/bio_gene_locations.R")
+#  library(ggbio)
+#  library(gginnards)
+#  library(ggrepel)
+#  if (! "EnsDb.Hsapiens.v75" %in% rownames(installed.packages()))
+#    BiocManager::install("EnsDb.Hsapiens.v75")
+#  
+#  p2 = bio_gene_locations(6, c(28e6, 34e6),
+#                          subset_genes = c('HLA-F', 'HLA-G', 'HLA-A', 'HLA-E',
+#                                           'HLA-C', 'HLA-B', 'HLA-DRA',
+#                                           'HLA-DRB5', 'HLA-DRB1', 'HLA-DQA1',
+#                                           'HLA-DQB1', 'HLA-DQA2', 'HLA-DQB2',
+#                                           'HLA-DOB', 'HLA-DMB', 'HLA-DMA',
+#                                           'HLA-DOA', 'HLA-DPA1', 'HLA-DPB1'))
+#  
+#  plotly::subplot(p1, p2$plotly_location %>% layout(yaxis=list(range=c(0.25, 2))),
+#                  shareY = T, titleX = T, margin=0.05,
+#                  nrows=2, heights=c(0.7, 0.3))
+#  
+
+## ----locusOutput, echo = FALSE, message=FALSE, fig.align='center', out.width='80%', out.extra='style="border: 0;"'----
+knitr::include_graphics("locus.png")
 
