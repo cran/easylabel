@@ -29,7 +29,7 @@ library(easylabel)
 ## ----scatter1, echo = FALSE, message=FALSE, fig.align='center', out.width='80%', out.extra='style="border: 0;"'----
 knitr::include_graphics("scatter1.png")
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  data(mtcars)
 #  
 #  p1 <- easylabel(mtcars, x = 'mpg', y = 'wt', col = 'cyl',
@@ -318,7 +318,7 @@ knitr::include_graphics("manhattan.png")
 #                shape = 'col',
 #                shapeScheme = c(rep(20, 4), 18))
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  # Create a locus plot over one chromosomal region
 #  library(plotly)
 #  p1 = easyManhattan(SLE_gwas[SLE_gwas$chrom == 6 &
