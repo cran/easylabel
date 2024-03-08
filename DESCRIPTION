@@ -1,7 +1,7 @@
 Package: easylabel
 Type: Package
 Title: Interactive Scatter Plot and Volcano Plot Labels
-Version: 0.2.7
+Version: 0.2.8
 Authors@R: 
     c(person(given = "Myles",family = "Lewis",
     role = c("aut", "cre"),
@@ -28,14 +28,14 @@ LazyData: true
 biocViews:
 Suggests: AnnotationDbi, knitr, org.Hs.eg.db, qvalue, rmarkdown
 Imports: DT, ggplot2, gtools, plotly (>= 4.10.0), RColorBrewer, rlang,
-        shiny, shinycssloaders, shinybusy, splus2R
-RoxygenNote: 7.2.3
+        shiny, shinycssloaders, shinybusy
+RoxygenNote: 7.3.1
 VignetteBuilder: knitr
 Depends: R (>= 2.10)
 NeedsCompilation: no
-Packaged: 2023-10-24 19:10:24 UTC; myles
+Packaged: 2024-03-08 16:51:59 UTC; myles
 Author: Myles Lewis [aut, cre] (<https://orcid.org/0000-0001-9365-5345>),
   Katriona Goldmann [aut] (<https://orcid.org/0000-0002-9073-6323>),
   Cankut Cubuk [ctb] (<https://orcid.org/0000-0003-4646-0849>)
 Repository: CRAN
-Date/Publication: 2023-10-24 19:30:02 UTC
+Date/Publication: 2024-03-08 17:10:06 UTC
