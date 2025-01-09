@@ -1,6 +1,16 @@
 News
 =====
 
+# easylabel 0.3.2
+###### 6/1/2025
+* Added option to save other file types (svg, png, jpeg, tiff) from shiny 
+interface.
+* Added ability to embed an image of the points as a rastered bitmap (png). This 
+helps reduce file size with large numbers of points.
+* Rastered bitmap is cached using memoise to speed up workflow.
+* Added saving of state of labels from shiny and enabled reloading using 
+`loadlabel()`.
+
 # easylabel 0.2.8
 ###### 30/10/2023
 * Bugfix for peak detection error when `showOutliers = FALSE` in `easyManhattan()`

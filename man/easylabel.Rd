@@ -10,6 +10,7 @@ easylabel(
   y,
   labs = NULL,
   startLabels = NULL,
+  start_xy = NULL,
   cex.text = 0.72,
   col = NULL,
   colScheme = NULL,
@@ -73,6 +74,9 @@ Label names do not have to be unique. If \code{NULL} defaults to \code{rownames(
 \item{startLabels}{Vector of initial labels. With a character vector, labels
 are identified in the column specified by \code{labs}. With a numeric vector,
 points to be labelled are referred to by row number.}
+
+\item{start_xy}{List containing label annotation starting coordinates.
+Invoked by \code{\link[=loadlabel]{loadlabel()}}.}
 
 \item{cex.text}{Font size for labels. Default 0.72 to match plotly font size.
 See \code{\link[=text]{text()}}.}
@@ -250,16 +254,26 @@ Instructions:
 \item Hover over and click on/off genes which you want to label.
 \item When you have selected all your chosen genes, then drag gene names to
 move label positions.
-\item Click the save button to export a PDF in base graphics.
+\item Click the save button to export a PDF or other file types (SVG, jpeg, tiff,
+png) produced in base graphics. Files are saved to the browser downloads
+folder by default.
 \item The Table tab shows a table view of the dataset to help with annotation.
 }
 
-To export an SVG from plotly:
-\itemize{
-\item Switch to SVG when finalised (only do this at last moment as otherwise
-editing is very slow).
-\item Press camera button in modebar to save image as SVG.
-}
+The 'raster points' checkbox converts only the points to a raster which is
+embedded in pdf or svg exports, while the rest of the plot (axis/label
+lines/text etc) remain vectorised. This only applies when saving pdf or svg.
+For other file types the whole plot is rasterized as normal by base graphics.
+
+For efficiency, the raster of the points is cached using the \code{memoise}
+package. So if users change the labels or change from pdf to svg, the export
+is much faster. If the resolution is changed the points will need to be
+re-rasterized.
+
+In the shiny interface the "Save state" button saves an rds file containing
+the label positions and state of the plot as an 'easylab' S3 class object to
+the current working directory. This can be reloaded in future sessions using
+\code{\link[=loadlabel]{loadlabel()}}.
 }
 \examples{
 
@@ -271,5 +285,5 @@ easylabel(mtcars, x = 'mpg', y = 'wt', col = 'cyl')
 }
 }
 \seealso{
-\code{\link[=easyVolcano]{easyVolcano()}}, \code{\link[=easyMAplot]{easyMAplot()}}
+\code{\link[=easyVolcano]{easyVolcano()}}, \code{\link[=easyMAplot]{easyMAplot()}}, \code{\link[=easyManhattan]{easyManhattan()}}, \code{\link[=loadlabel]{loadlabel()}}
 }
