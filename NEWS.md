@@ -1,6 +1,14 @@
 News
 =====
 
+# easylabel 0.3.3
+###### 28/1/2025
+* Fixed problem with xlim and ylim (thanks to RC2754).
+* Fixed save state in easyVolcano etc.
+* Added new function `add_labels()` which allows quick addition of labels to a 
+plotly 2d or 3d scatter plot.
+* New convenience function `arial` for converting font in plotly plots to Arial. 
+
 # easylabel 0.3.2
 ###### 6/1/2025
 * Added option to save other file types (svg, png, jpeg, tiff) from shiny 

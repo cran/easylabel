@@ -227,7 +227,11 @@ easylabel <- function(data, x, y,
                       output_shiny = TRUE, 
                       ...) {
   name_data <- deparse(substitute(data))
-  call. <- match.call()
+  call. <- match.call(expand.dots = TRUE)
+  evalcall <- as.list(call.)[-1]
+  evalcall[c("data", "panel.last", "startLabels", "start_xy")] <- NULL
+  evalcall <- lapply(evalcall, eval.parent, n = 2L)
+  
   if (is.null(filename)) filename <- paste0("label_", name_data)
   args <- list(...)
   if (!inherits(data, 'data.frame') | inherits(data, 'tbl')) data <- as.data.frame(data)
@@ -276,7 +280,7 @@ easylabel <- function(data, x, y,
       ylim[1] <- ylim[1] - xyspan[2] * 0.02
       ylim[2] <- ylim[2] + xyspan[2] * 0.02
     }
-    pyaxis <- c(pyaxis, range = as.list(ylim))
+    pyaxis <- c(pyaxis, list(range = ylim))
   }
   if (!is.null(xlim)) {
     notNA <- !is.na(data[,x])
@@ -288,7 +292,7 @@ easylabel <- function(data, x, y,
       xlim[1] <- xlim[1] - xyspan[1] * 0.02
       xlim[2] <- xlim[2] + xyspan[1] * 0.02
     }
-    pxaxis <- c(pxaxis, range = as.list(xlim))
+    pxaxis <- c(pxaxis, list(range = xlim))
   }
 
   # combine symbols & outlier symbol
@@ -523,7 +527,7 @@ easylabel <- function(data, x, y,
                         actionButton("add_batch", "Add batch"),
                         actionButton("clear", "Clear all"),
                         actionButton("save_state", "Save state", icon = icon("floppy-disk")),
-                        checkboxInput("embed_data", "Embed data")
+                        checkboxInput("embed_data", "Embed data", value = TRUE)
                         ),
                  column(4,
                         textInput("filename", "Filename", filename),
@@ -971,10 +975,6 @@ easylabel <- function(data, x, y,
     # save state
     observeEvent(input$save_state, {
       file <- paste0(input$filename, ".rds")
-      xcall <- as.list(call.)[-1]
-      xcall[c("data", "panel.last", "startLabels",
-              "start_xy")] <- NULL
-      evalcall <- lapply(xcall, eval)
       out <- list(call = call.,
                   evalcall = evalcall,
                   startLabels = as.integer(labels$list),
